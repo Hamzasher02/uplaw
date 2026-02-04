@@ -1,15 +1,15 @@
 import {
-    createCaseService,
-    getClientCasesService,
-    getCaseByIdService,
-    getSuggestedLawyersService,
-    inviteLawyersService,
-    updateCaseStatusService,
-    getLawyerReceivedCasesService,
-    updateInvitationStatusService,
-} from '../services/case.services.js';
-import asyncWrapper from '../middleware/asyncWrapper.js';
-import { CASE_STATUS } from '../model/case.model.js';
+  createCaseService,
+  getClientCasesService,
+  getCaseByIdService,
+  getSuggestedLawyersService,
+  inviteLawyersService,
+  updateCaseStatusService,
+  getLawyerReceivedCasesService,
+  updateInvitationStatusService,
+} from "../services/case.services.js";
+import asyncWrapper from "../middleware/asyncWrapper.js";
+import { CASE_STATUS } from "../model/case.model.js";
 
 /**
  * Case Controller - HTTP handlers for case-related endpoints
@@ -20,21 +20,23 @@ import { CASE_STATUS } from '../model/case.model.js';
  * POST /cases
  */
 export const createCase = asyncWrapper(async (req, res) => {
-    const clientId = req.user.userId;
-    const caseData = req.body;
+  const clientId = req.user.userId;
+  const caseData = req.body;
 
-    // Handle voice note file if uploaded
-    const voiceNoteFile = req.file || null;
+  // Handle voice note file if uploaded
+  const voiceNoteFile = req.file || null;
 
-    const newCase = await createCaseService(caseData, clientId, voiceNoteFile);
+  const newCase = await createCaseService(caseData, clientId, voiceNoteFile);
 
-    res.status(201).json([{
-        success: true,
-        message: 'Case created successfully',
-        data: {
-            case: newCase
-        }
-    }]);
+  res.status(201).json([
+    {
+      success: true,
+      message: "Case created successfully",
+      data: {
+        case: newCase,
+      },
+    },
+  ]);
 });
 
 /**
@@ -42,44 +44,70 @@ export const createCase = asyncWrapper(async (req, res) => {
  * GET /cases
  */
 export const getMyCases = asyncWrapper(async (req, res) => {
-    const clientId = req.user.userId;
-    const { status } = req.query;
+  const clientId = req.user.userId;
+  const { status } = req.query;
 
-    const cases = await getClientCasesService(clientId, status);
+  const cases = await getClientCasesService(clientId, status);
 
-    // Calculate counts by status
-    res.status(200).json([{
-        success: true,
-        message: 'Cases retrieved successfully',
-        data: {
-            cases,
-            counts: {
-                total: cases.length,
-                ...statusCounts,
-                invitations: totalInvitations,
-                proposals: totalProposals
-            }
-        }
-    }]);
+  // Calculate counts by status
+  const statusCounts = {
+    active: 0,
+    pending: 0,
+    assigned: 0,
+    completed: 0,
+    cancelled: 0,
+  };
+
+  let totalInvitations = 0;
+  let totalProposals = 0;
+
+  cases.forEach((c) => {
+    if (statusCounts[c.status] !== undefined) {
+      statusCounts[c.status]++;
+    }
+
+    // ➤ NEW LOGIC
+    totalInvitations += c.invitationCount || 0;
+    totalProposals += c.proposalCount || 0;
+  });
+
+  res.status(200).json([
+    {
+      success: true,
+      message: "Cases retrieved successfully",
+      data: {
+        cases,
+        counts: {
+          total: cases.length,
+          ...statusCounts,
+          invitations: totalInvitations,
+          proposals: totalProposals,
+        },
+      },
+    },
+  ]);
 });
+
 /**
  * Get a single case by ID
  * GET /cases/:id
  */
 export const getCaseById = asyncWrapper(async (req, res) => {
-    const { id } = req.params;
-    const userId = req.user.userId;
-    const userRole = req.user.role;
+  const { id } = req.params;
+  const userId = req.user.userId;
+  const userRole = req.user.role;
 
-    const caseDoc = await getCaseByIdService(id, userId, userRole);
+  const caseDoc = await getCaseByIdService(id, userId, userRole);
 
-    res.status(200).json([{
-        success: true,
-        message: 'Case retrieved successfully',
-        data: {
-            case: caseDoc
-        }
-    }]);
+  res.status(200).json([
+    {
+      success: true,
+      message: "Case retrieved successfully",
+      data: {
+        case: caseDoc,
+      },
+    },
+  ]);
 });
 
 /**
@@ -87,19 +115,21 @@ export const getCaseById = asyncWrapper(async (req, res) => {
  * GET /cases/:id/lawyers
  */
 export const getSuggestedLawyers = asyncWrapper(async (req, res) => {
-    const { id } = req.params;
-    const clientId = req.user.userId;
+  const { id } = req.params;
+  const clientId = req.user.userId;
 
-    const lawyers = await getSuggestedLawyersService(id, clientId);
+  const lawyers = await getSuggestedLawyersService(id, clientId);
 
-    res.status(200).json([{
-        success: true,
-        message: 'Suggested lawyers retrieved successfully',
-        data: {
-            lawyers,
-            count: lawyers.length
-        }
-    }]);
+  res.status(200).json([
+    {
+      success: true,
+      message: "Suggested lawyers retrieved successfully",
+      data: {
+        lawyers,
+        count: lawyers.length,
+      },
+    },
+  ]);
 });
 
 /**
@@ -107,28 +137,32 @@ export const getSuggestedLawyers = asyncWrapper(async (req, res) => {
  * POST /cases/:id/invite
  */
 export const inviteLawyers = asyncWrapper(async (req, res) => {
-    const { id } = req.params;
-    const { lawyerIds } = req.body;
-    const clientId = req.user.userId;
+  const { id } = req.params;
+  const { lawyerIds } = req.body;
+  const clientId = req.user.userId;
 
-    if (!lawyerIds || !Array.isArray(lawyerIds) || lawyerIds.length === 0) {
-        return res.status(400).json([{
-            success: false,
-            message: 'Please provide an array of lawyer IDs',
-            data: null
-        }]);
-    }
+  if (!lawyerIds || !Array.isArray(lawyerIds) || lawyerIds.length === 0) {
+    return res.status(400).json([
+      {
+        success: false,
+        message: "Please provide an array of lawyer IDs",
+        data: null,
+      },
+    ]);
+  }
 
-    const result = await inviteLawyersService(id, lawyerIds, clientId);
+  const result = await inviteLawyersService(id, lawyerIds, clientId);
 
-    res.status(200).json([{
-        success: true,
-        message: result.message,
-        data: {
-            invited: result.invited,
-            skipped: result.skipped
-        }
-    }]);
+  res.status(200).json([
+    {
+      success: true,
+      message: result.message,
+      data: {
+        invited: result.invited,
+        skipped: result.skipped,
+      },
+    },
+  ]);
 });
 
 /**
@@ -136,19 +170,21 @@ export const inviteLawyers = asyncWrapper(async (req, res) => {
  * PATCH /cases/:id/status
  */
 export const updateCaseStatus = asyncWrapper(async (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
-    const clientId = req.user.userId;
+  const { id } = req.params;
+  const { status } = req.body;
+  const clientId = req.user.userId;
 
-    const updatedCase = await updateCaseStatusService(id, clientId, status);
+  const updatedCase = await updateCaseStatusService(id, clientId, status);
 
-    res.status(200).json([{
-        success: true,
-        message: 'Case status updated successfully',
-        data: {
-            case: updatedCase
-        }
-    }]);
+  res.status(200).json([
+    {
+      success: true,
+      message: "Case status updated successfully",
+      data: {
+        case: updatedCase,
+      },
+    },
+  ]);
 });
 
 /**
@@ -156,19 +192,21 @@ export const updateCaseStatus = asyncWrapper(async (req, res) => {
  * GET /cases/received
  */
 export const getReceivedCases = asyncWrapper(async (req, res) => {
-    const lawyerId = req.user.userId;
-    const { status } = req.query;
+  const lawyerId = req.user.userId;
+  const { status } = req.query;
 
-    const invitations = await getLawyerReceivedCasesService(lawyerId, status);
+  const invitations = await getLawyerReceivedCasesService(lawyerId, status);
 
-    res.status(200).json([{
-        success: true,
-        message: 'Received cases retrieved successfully',
-        data: {
-            invitations,
-            count: invitations.length
-        }
-    }]);
+  res.status(200).json([
+    {
+      success: true,
+      message: "Received cases retrieved successfully",
+      data: {
+        invitations,
+        count: invitations.length,
+      },
+    },
+  ]);
 });
 
 /**
@@ -176,17 +214,19 @@ export const getReceivedCases = asyncWrapper(async (req, res) => {
  * PATCH /cases/invitations/:id/status
  */
 export const respondToInvitation = asyncWrapper(async (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
-    const lawyerId = req.user.userId;
+  const { id } = req.params;
+  const { status } = req.body;
+  const lawyerId = req.user.userId;
 
-    const invitation = await updateInvitationStatusService(id, lawyerId, status);
+  const invitation = await updateInvitationStatusService(id, lawyerId, status);
 
-    res.status(200).json([{
-        success: true,
-        message: 'Invitation status updated successfully',
-        data: {
-            invitation
-        }
-    }]);
+  res.status(200).json([
+    {
+      success: true,
+      message: "Invitation status updated successfully",
+      data: {
+        invitation,
+      },
+    },
+  ]);
 });
