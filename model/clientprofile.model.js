@@ -39,6 +39,13 @@ const clientProfileSchema = new mongoose.Schema({
         default: LANGUAGES.ENGLISH
     },
 
+    // User Type / Subscription
+    userType: {
+        type: String,
+        enum: ['normal', 'premium'],
+        default: 'normal'
+    },
+
     // Identification
     cnic: {
         type: String,

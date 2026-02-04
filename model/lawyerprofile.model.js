@@ -41,6 +41,13 @@ const lawyerProfileSchema = new mongoose.Schema({
         unique: true
     },
 
+    // ========== User Type / Subscription ==========
+    userType: {
+        type: String,
+        enum: ['normal', 'premium'],
+        default: 'normal'
+    },
+
     // ========== STEP 1: Basic Information ==========
     dateOfBirth: {
         type: Date
