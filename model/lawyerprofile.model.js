@@ -62,25 +62,28 @@ const lawyerProfileSchema = new mongoose.Schema({
         maxlength: [500, 'Postal address cannot exceed 500 characters']
     },
 
-    // ========== STEP 2: Professional Qualifications (Flat Fields) ==========
-    // Educational Qualification
-    degree: {
-        type: String,
-        trim: true
-    },
-    university: {
-        type: String,
-        trim: true
-    },
-    passingYear: {
-        type: Number,
-        min: 1950,
-        max: new Date().getFullYear()
-    },
-    degreeCertificate: {
-        publicId: String,
-        secureUrl: String
-    },
+    // ========== STEP 2: Professional Qualifications (Multiple) ==========
+    // Educational Qualifications (Array)
+    educationalQualifications: [{
+        _id: mongoose.Schema.Types.ObjectId,
+        degree: {
+            type: String,
+            trim: true
+        },
+        university: {
+            type: String,
+            trim: true
+        },
+        passingYear: {
+            type: Number,
+            min: 1950,
+            max: new Date().getFullYear()
+        },
+        degreeCertificate: {
+            publicId: String,
+            secureUrl: String
+        }
+    }],
 
     // Bar License
     licenseNo: {
@@ -145,14 +148,14 @@ const lawyerProfileSchema = new mongoose.Schema({
     },
 
     // ========== STEP 5: Documents ==========
-    cnic: {
+    cnicDocuments: [{
         type: String,
-        trim: true
-    },
-    cnicDocument: {
+        enum: ['front', 'back', 'other'],
+        documentType: String
+    }, {
         publicId: String,
         secureUrl: String
-    },
+    }],
     // profilePhoto is stored in User model
     // barLicenseDocument is already defined above
 
@@ -196,10 +199,10 @@ lawyerProfileSchema.index({ servicesOffered: 1 });
 lawyerProfileSchema.methods.validateStep = function (stepNumber) {
     const validations = {
         1: () => !!(this.dateOfBirth && this.city),
-        2: () => !!(this.degree && this.university && this.licenseNo),
+        2: () => !!(this.educationalQualifications?.length > 0 && this.licenseNo),
         3: () => !!(this.areasOfPractice?.length > 0 && this.courtJurisdiction?.length > 0),
         4: () => !!(this.practiceLocations?.length > 0 && this.professionalBio),
-        5: () => !!(this.cnicDocument?.secureUrl && this.barLicenseDocument?.secureUrl)
+        5: () => !!(this.cnicDocuments?.length >= 2)
     };
 
     return validations[stepNumber] ? validations[stepNumber]() : false;

@@ -77,10 +77,13 @@ export async function updateLawyerProfileService(userId, data, files = {}) {
     if (data.city !== undefined) profile.city = data.city;
     if (data.postalAddress !== undefined) profile.postalAddress = data.postalAddress;
 
-    // ========== STEP 2: Professional Qualifications (Flat Fields) ==========
-    if (data.degree !== undefined) profile.degree = data.degree;
-    if (data.university !== undefined) profile.university = data.university;
-    if (data.passingYear !== undefined) profile.passingYear = parseInt(data.passingYear, 10);
+    // ========== STEP 2: Professional Qualifications (Multiple) ==========
+    if (data.educationalQualifications !== undefined) {
+        const qualifications = parseJsonField(data.educationalQualifications, []);
+        if (Array.isArray(qualifications)) {
+            profile.educationalQualifications = qualifications;
+        }
+    }
     if (data.licenseNo !== undefined) profile.licenseNo = data.licenseNo;
     if (data.associationBar !== undefined) profile.associationBar = data.associationBar;
     if (data.barCity !== undefined) profile.barCity = data.barCity;
@@ -114,7 +117,6 @@ export async function updateLawyerProfileService(userId, data, files = {}) {
     if (data.professionalBio !== undefined) profile.professionalBio = data.professionalBio;
 
     // ========== STEP 5: Documents ==========
-    if (data.cnic !== undefined) profile.cnic = data.cnic;
 
     // ========== FILE UPLOADS ==========
     if (files.profilePhoto?.[0]) {
@@ -127,14 +129,24 @@ export async function updateLawyerProfileService(userId, data, files = {}) {
         if (result) user.profilePicture = result;
     }
 
-    if (files.cnicDocument?.[0]) {
-        const result = await handleFileUpload({
-            file: files.cnicDocument[0],
-            existingDoc: profile.cnicDocument,
-            uploadFn: uploadToCloud,
-            deleteFn: deleteFromCloud
-        });
-        if (result) profile.cnicDocument = result;
+    if (files.cnicDocuments) {
+        // Handle multiple CNIC documents (front, back, etc.)
+        const cnicFiles = Array.isArray(files.cnicDocuments) ? files.cnicDocuments : [files.cnicDocuments];
+        profile.cnicDocuments = [];
+        
+        for (let i = 0; i < cnicFiles.length; i++) {
+            if (cnicFiles[i]) {
+                const result = await handleFileUpload({
+                    file: cnicFiles[i],
+                    existingDoc: profile.cnicDocuments?.[i],
+                    uploadFn: uploadToCloud,
+                    deleteFn: deleteFromCloud
+                });
+                if (result) {
+                    profile.cnicDocuments.push(result);
+                }
+            }
+        }
     }
 
     if (files.barLicenseDocument?.[0]) {
@@ -147,14 +159,23 @@ export async function updateLawyerProfileService(userId, data, files = {}) {
         if (result) profile.barLicenseDocument = result;
     }
 
-    if (files.degreeCertificate?.[0]) {
-        const result = await handleFileUpload({
-            file: files.degreeCertificate[0],
-            existingDoc: profile.degreeCertificate,
-            uploadFn: uploadToCloud,
-            deleteFn: deleteFromCloud
-        });
-        if (result) profile.degreeCertificate = result;
+    if (files.degreeCertificate) {
+        // Handle multiple degree certificates for multiple qualifications
+        const certFiles = Array.isArray(files.degreeCertificate) ? files.degreeCertificate : [files.degreeCertificate];
+        
+        for (let i = 0; i < certFiles.length; i++) {
+            if (certFiles[i]) {
+                const result = await handleFileUpload({
+                    file: certFiles[i],
+                    existingDoc: profile.educationalQualifications?.[i]?.degreeCertificate,
+                    uploadFn: uploadToCloud,
+                    deleteFn: deleteFromCloud
+                });
+                if (result && profile.educationalQualifications?.[i]) {
+                    profile.educationalQualifications[i].degreeCertificate = result;
+                }
+            }
+        }
     }
 
     // Save both documents
@@ -200,23 +221,35 @@ export async function updateLawyerStep2Service(userId, data, files) {
     const profile = await getOrCreateProfile(LawyerProfile, userId);
 
     // Update Step 2 Fields
-    if (data.degree !== undefined) profile.degree = data.degree;
-    if (data.university !== undefined) profile.university = data.university;
-    if (data.passingYear !== undefined) profile.passingYear = parseInt(data.passingYear, 10);
+    if (data.educationalQualifications !== undefined) {
+        const qualifications = parseJsonField(data.educationalQualifications, []);
+        if (Array.isArray(qualifications)) {
+            profile.educationalQualifications = qualifications;
+        }
+    }
     if (data.licenseNo !== undefined) profile.licenseNo = data.licenseNo;
     if (data.associationBar !== undefined) profile.associationBar = data.associationBar;
     if (data.barCity !== undefined) profile.barCity = data.barCity;
     if (data.yearsOfExperience !== undefined) profile.yearsOfExperience = parseInt(data.yearsOfExperience, 10);
 
     // Handle Step 2 Files
-    if (files?.degreeCertificate?.[0]) {
-        const result = await handleFileUpload({
-            file: files.degreeCertificate[0],
-            existingDoc: profile.degreeCertificate,
-            uploadFn: uploadToCloud,
-            deleteFn: deleteFromCloud
-        });
-        if (result) profile.degreeCertificate = result;
+    if (files?.degreeCertificate) {
+        // Handle multiple degree certificates for multiple qualifications
+        const certFiles = Array.isArray(files.degreeCertificate) ? files.degreeCertificate : [files.degreeCertificate];
+        
+        for (let i = 0; i < certFiles.length; i++) {
+            if (certFiles[i]) {
+                const result = await handleFileUpload({
+                    file: certFiles[i],
+                    existingDoc: profile.educationalQualifications?.[i]?.degreeCertificate,
+                    uploadFn: uploadToCloud,
+                    deleteFn: deleteFromCloud
+                });
+                if (result && profile.educationalQualifications?.[i]) {
+                    profile.educationalQualifications[i].degreeCertificate = result;
+                }
+            }
+        }
     }
 
     if (files?.barLicenseDocument?.[0]) {
@@ -296,7 +329,6 @@ export async function updateLawyerStep5Service(userId, data, files) {
     const profile = await getOrCreateProfile(LawyerProfile, userId);
 
     // Update Step 5 Fields
-    if (data.cnic !== undefined) profile.cnic = data.cnic;
 
     // Handle Step 5 Files
     let userModified = false;
@@ -314,14 +346,24 @@ export async function updateLawyerStep5Service(userId, data, files) {
         }
     }
 
-    if (files?.cnicDocument?.[0]) {
-        const result = await handleFileUpload({
-            file: files.cnicDocument[0],
-            existingDoc: profile.cnicDocument,
-            uploadFn: uploadToCloud,
-            deleteFn: deleteFromCloud
-        });
-        if (result) profile.cnicDocument = result;
+    if (files?.cnicDocuments) {
+        // Handle multiple CNIC documents (front, back, etc.)
+        const cnicFiles = Array.isArray(files.cnicDocuments) ? files.cnicDocuments : [files.cnicDocuments];
+        profile.cnicDocuments = [];
+        
+        for (let i = 0; i < cnicFiles.length; i++) {
+            if (cnicFiles[i]) {
+                const result = await handleFileUpload({
+                    file: cnicFiles[i],
+                    existingDoc: profile.cnicDocuments?.[i],
+                    uploadFn: uploadToCloud,
+                    deleteFn: deleteFromCloud
+                });
+                if (result) {
+                    profile.cnicDocuments.push(result);
+                }
+            }
+        }
     }
 
     if (userModified) await user.save();
