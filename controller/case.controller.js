@@ -48,20 +48,6 @@ export const getMyCases = asyncWrapper(async (req, res) => {
     const cases = await getClientCasesService(clientId, status);
 
     // Calculate counts by status
-    const statusCounts = {
-        active: 0,
-        pending: 0,
-        assigned: 0,
-        completed: 0,
-        cancelled: 0
-    };
-
-    cases.forEach(c => {
-        if (statusCounts[c.status] !== undefined) {
-            statusCounts[c.status]++;
-        }
-    });
-
     res.status(200).json([{
         success: true,
         message: 'Cases retrieved successfully',
@@ -69,12 +55,13 @@ export const getMyCases = asyncWrapper(async (req, res) => {
             cases,
             counts: {
                 total: cases.length,
-                ...statusCounts
+                ...statusCounts,
+                invitations: totalInvitations,
+                proposals: totalProposals
             }
         }
     }]);
 });
-
 /**
  * Get a single case by ID
  * GET /cases/:id
