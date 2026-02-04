@@ -17,59 +17,6 @@ import { createJWT } from '../utils/cookies.utils.js';
  */
 
 /**
- * PRIVATE HELPER: Build Access Token (eliminates duplication)
- * Used by: generateTokensAndProfile, refreshTokenService
- */
-function buildAccessToken(user) {
-    return createJWT({
-        payload: {
-            userId: user._id,
-            email: user.email,
-            phoneNumber: user.phoneNumber,
-            role: user.role
-        },
-        expiresIn: '15m'
-    });
-}
-
-/**
- * PRIVATE HELPER: Find user by email or phone (eliminates duplication)
- * Used by: loginService, forgotPasswordService
- * @param {string} identifier - Email or phone number
- * @param {boolean} selectPassword - Whether to include password field (default: false)
- */
-async function findUserByIdentifier(identifier, selectPassword = false) {
-    const query = User.findOne({
-        $or: [
-            { email: identifier.toLowerCase() },
-            { phoneNumber: identifier }
-        ]
-    });
-
-    if (selectPassword) {
-        query.select('+password');
-    }
-
-    return await query;
-}
-
-/**
- * PRIVATE HELPER: Assert email and phone are unique (eliminates duplication)
- * Used by: registerClientService, registerLawyerService
- */
-async function assertUniqueEmailPhone(email, phoneNumber) {
-    const isEmailExist = await User.findOne({ email });
-    if (isEmailExist) {
-        throw new BAD_REQUEST('User already exists with this email');
-    }
-
-    const isPhoneExist = await User.findOne({ phoneNumber });
-    if (isPhoneExist) {
-        throw new BAD_REQUEST('User already exists with this phone number');
-    }
-}
-
-/**
  * Helper: Generate tokens and get profile (Batch 2 original)
  * 
  * General Overview:
@@ -82,7 +29,15 @@ async function assertUniqueEmailPhone(email, phoneNumber) {
 async function generateTokensAndProfile(user, reqInfo) {
     // 1. Generate Access Token (Short-lived 15 mins)
     // Code Block Explanation: Creates a signed JWT carrying user identity claims.
-    const accessToken = buildAccessToken(user);
+    const accessToken = createJWT({
+        payload: {
+            userId: user._id,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: user.role
+        },
+        expiresIn: '15m'
+    });
 
     // 2. Generate Refresh Token (Long-lived 7 days)
     // Code Block Explanation: Generates a random 40-byte hex string for the refresh token.
@@ -124,7 +79,11 @@ export async function registerClientService(data, file) {
         const { fullName, fullNameUrdu, fatherName, fatherNameUrdu, email, phoneNumber, dateOfBirth, password } = data;
 
         // Check existing user
-        await assertUniqueEmailPhone(email, phoneNumber);
+        const isEmailExist = await User.findOne({ email });
+        if (isEmailExist) throw new BAD_REQUEST('User already exists with this email');
+
+        const isPhoneExist = await User.findOne({ phoneNumber });
+        if (isPhoneExist) throw new BAD_REQUEST('User already exists with this phone number');
 
         // Upload profile picture
         let profilePicture = null;
@@ -188,7 +147,11 @@ export async function registerLawyerService(data, file) {
         const { fullName, fullNameUrdu, email, phoneNumber, barCouncil, licenseNo, city, dateOfBirth, password } = data;
 
         // Check existing user
-        await assertUniqueEmailPhone(email, phoneNumber);
+        const isEmailExist = await User.findOne({ email });
+        if (isEmailExist) throw new BAD_REQUEST('User already exists with this email');
+
+        const isPhoneExist = await User.findOne({ phoneNumber });
+        if (isPhoneExist) throw new BAD_REQUEST('User already exists with this phone number');
 
         // Upload profile picture
         let profilePicture = null;
@@ -307,7 +270,12 @@ export async function verifyAccountService(email, otp, reqInfo) {
  */
 export async function loginService(identifier, password, reqInfo) {
     // Find user by email (lowercase) or phone
-    const user = await findUserByIdentifier(identifier, true);
+    const user = await User.findOne({
+        $or: [
+            { email: identifier.toLowerCase() },
+            { phoneNumber: identifier }
+        ]
+    }).select('+password');
 
     if (!user) {
         throw new NOT_FOUND('No account found with these credentials');
@@ -353,7 +321,12 @@ export async function logoutService(userId) {
  */
 export async function forgotPasswordService(identifier) {
     // Find user by email (lowercase) or phone
-    const user = await findUserByIdentifier(identifier);
+    const user = await User.findOne({
+        $or: [
+            { email: identifier.toLowerCase() },
+            { phoneNumber: identifier }
+        ]
+    });
 
     if (!user) {
         throw new NOT_FOUND('No account found');
@@ -456,7 +429,15 @@ export async function refreshTokenService(token, reqInfo) {
     await tokenRecord.save();
 
     // Generate new access token
-    const accessToken = buildAccessToken(user);
+    const accessToken = createJWT({
+        payload: {
+            userId: user._id,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: user.role
+        },
+        expiresIn: '15m'
+    });
 
     return {
         accessToken,

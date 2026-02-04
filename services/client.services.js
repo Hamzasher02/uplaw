@@ -56,7 +56,6 @@ export async function updateClientProfileService(userId, data, files) {
     if (data.whatsappNumber !== undefined) profile.whatsappNumber = data.whatsappNumber;
     if (data.preferredLanguage !== undefined) profile.preferredLanguage = data.preferredLanguage;
     if (data.bio !== undefined) profile.bio = data.bio;
-    if (data.usertype !== undefined) profile.usertype = data.usertype;
 
     // Handle File Uploads
     if (files) {

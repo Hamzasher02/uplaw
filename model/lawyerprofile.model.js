@@ -174,13 +174,6 @@ const lawyerProfileSchema = new mongoose.Schema({
         step3: { type: Boolean, default: false },
         step4: { type: Boolean, default: false },
         step5: { type: Boolean, default: false }
-    },
-
-    // User Type
-    usertype: {
-        type: String,
-        enum: ['premium', 'normal'],
-        default: 'normal'
     }
 }, {
     timestamps: true

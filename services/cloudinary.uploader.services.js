@@ -12,23 +12,25 @@ const uploader = v2.uploader
 
 async function uploadToCloud(path) {
     try {
-        if (process.env.NODE_ENV === 'development') {
-            console.log("Uploading to Cloudinary:", path);
-        }
-
-        const { public_id, secure_url } = await uploader.upload(path, {
+        console.log("Uploading to Cloudinary:", path);
+        console.log("Cloud Name:", process.env.CLOUDINARY_CLOUD_NAME ? "Set" : "MISSING!");
+        console.log("API Key:", process.env.CLOUDINARY_API_KEY ? "Set" : "MISSING!");
+        console.log("API Secret:", process.env.CLOUDINARY_API_SECRET ? "Set" : "MISSING!");
+        
+        const { public_id, secure_url } = await uploader.upload(path, { 
             folder: "uplaw_uploads",
             resource_type: "auto"
         });
         return { publicId: public_id, secureUrl: secure_url };
     } catch (err) {
         console.error("Cloudinary upload failed:", err.message);
+        console.error("Full error:", err);
         throw new INTERNAL_SERVER_ERROR("Failed to upload file to cloud storage");
-    }
+    } 
 }
-function deleteFromCloud(publicId) {
+ function deleteFromCloud(publicId) {
     return uploader.destroy(publicId)
-
+    
 }
 
 async function uploadPaymentScreenshot(path) {
@@ -38,7 +40,7 @@ async function uploadPaymentScreenshot(path) {
     } catch (err) {
         console.error("Cloudinary upload failed:", err.message)
         throw new INTERNAL_SERVER_ERROR("Failed to upload payment screenshot to cloud storage")
-    }
+    } 
 }
 
 //  Uploads large video files to Cloudinary in chunks.

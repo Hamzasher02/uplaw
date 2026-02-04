@@ -98,13 +98,13 @@ export const uploadLectureVideo = multer({
 }).single('lecture');
 
 // Multiple files upload (profile + transcript)
-export const uploadTranscriptAndProfilePictrue = multer({
-    dest: 'uploads/'
+export const uploadTranscriptAndProfilePictrue = multer({ 
+    dest: 'uploads/' 
 }).array('files', 2);
 
 // Two files general
-export const uploadTwoFiles = multer({
-    dest: 'uploads/'
+export const uploadTwoFiles = multer({ 
+    dest: 'uploads/' 
 }).array('files', 2);
 
 // Lawyer step 5 documents
@@ -141,23 +141,3 @@ export const uploadCaseFiles = multer({
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: audioFilter
 }).single('voiceNote');
-
-// Timeline Phase Documents - 10MB limit per file, max 10 files, PDF and images
-const timelineDocumentFilter = (req, file, cb) => {
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new BAD_REQUEST('Only PDF and image files (JPG, PNG, WEBP) are allowed for timeline documents'));
-    }
-};
-
-export const uploadTimelineDocuments = multer({
-    dest: 'uploads/',
-    limits: {
-        fileSize: 10 * 1024 * 1024,  // 10MB per file
-        files: 10  // Max 10 files
-    },
-    fileFilter: timelineDocumentFilter
-}).array('documents', 10);
-

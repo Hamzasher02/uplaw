@@ -113,9 +113,6 @@ export async function updateLawyerProfileService(userId, data, files = {}) {
     }
     if (data.professionalBio !== undefined) profile.professionalBio = data.professionalBio;
 
-    // ========== USER TYPE ==========
-    if (data.usertype !== undefined) profile.usertype = data.usertype;
-
     // ========== STEP 5: Documents ==========
     if (data.cnic !== undefined) profile.cnic = data.cnic;
 
