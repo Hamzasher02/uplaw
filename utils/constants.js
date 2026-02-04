@@ -8,6 +8,7 @@ export const ROLES = Object.freeze({
     ADMIN: 'admin',
     CLIENT: 'client',
     LAWYER: 'lawyer'
+    
 });
 
 // Account Status
@@ -31,7 +32,8 @@ export const OTP_PURPOSE = Object.freeze({
     REGISTRATION: 'registration',
     PASSWORD_RESET: 'password_reset',
     EMAIL_CHANGE: 'email_change',
-    PHONE_CHANGE: 'phone_change'
+    PHONE_CHANGE: 'phone_change',
+    LOGIN: "login",
 });
 
 // OTP Type
@@ -94,15 +96,15 @@ export const PERMISSIONS = Object.freeze({
     USERS_READ: 'users.read',
     USERS_WRITE: 'users.write',
     USERS_DELETE: 'users.delete',
-
+    
     // Client permissions
     CLIENT_PROFILE_READ: 'client.profile.read',
     CLIENT_PROFILE_WRITE: 'client.profile.write',
-
+    
     // Lawyer permissions
     LAWYER_PROFILE_READ: 'lawyer.profile.read',
     LAWYER_PROFILE_WRITE: 'lawyer.profile.write',
-
+    
     // Admin permissions
     ADMIN_DASHBOARD: 'admin.dashboard',
     ADMIN_USERS_MANAGE: 'admin.users.manage',
@@ -142,45 +144,4 @@ export const LOG_MODULES = Object.freeze({
     LAWYER: 'LAWYER',
     ADMIN: 'ADMIN',
     SYSTEM: 'SYSTEM'
-});
-
-// Timeline Phase Keys (internal database keys)
-export const PHASE_KEYS = Object.freeze({
-    CASE_INTAKE: 'phase1CaseIntake',
-    CASE_FILED: 'phase2CaseFiled',
-    TRIAL_PREPARATION: 'phase3TrialPreparation',
-    COURT_HEARING: 'phase4CourtHearing',
-    CASE_OUTCOME: 'phase5Outcome'
-});
-
-// Phase Status
-export const PHASE_STATUS = Object.freeze({
-    PENDING: 'pending',
-    ONGOING: 'ongoing',
-    COMPLETED: 'completed'
-});
-
-// Outcome Types (for phase 5)
-export const OUTCOME_TYPE = Object.freeze({
-    WON: 'won',
-    SETTLED: 'settled',
-    DISMISSED: 'dismissed'
-});
-
-// Phase Key Slug to Internal Key Mapping (for API route params)
-export const PHASE_SLUG_MAP = Object.freeze({
-    'case-intake': PHASE_KEYS.CASE_INTAKE,
-    'case-filed': PHASE_KEYS.CASE_FILED,
-    'trial-preparation': PHASE_KEYS.TRIAL_PREPARATION,
-    'court-hearing': PHASE_KEYS.COURT_HEARING,
-    'case-outcome': PHASE_KEYS.CASE_OUTCOME
-});
-
-// Next Phase Mapping (for sequential unlock)
-export const NEXT_PHASE_MAP = Object.freeze({
-    [PHASE_KEYS.CASE_INTAKE]: PHASE_KEYS.CASE_FILED,
-    [PHASE_KEYS.CASE_FILED]: PHASE_KEYS.TRIAL_PREPARATION,
-    [PHASE_KEYS.TRIAL_PREPARATION]: PHASE_KEYS.COURT_HEARING,
-    [PHASE_KEYS.COURT_HEARING]: PHASE_KEYS.CASE_OUTCOME,
-    [PHASE_KEYS.CASE_OUTCOME]: null // Last phase
 });

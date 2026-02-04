@@ -303,10 +303,6 @@ export async function respondToProposalService(proposalId, clientId, action, res
             assignedAt: new Date()
         });
 
-        // Auto-create timeline for the case (idempotent - will not fail if exists)
-        const { createTimelineService } = await import('./timeline.services.js');
-        await createTimelineService(proposal.caseId);
-
         // Reject all other pending proposals for this case
         await Proposal.updateMany(
             {

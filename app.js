@@ -9,7 +9,7 @@ import caseRouter from './router/case.router.js';
 import proposalRouter from './router/proposal.router.js';
 import customErrorHandler from './middleware/customerrorhandler.middleware.js';
 import routeNotFoundMiddleware from './middleware/routenotfound.middleware.js';
-
+import staffRoutes from "./router/staff.routes.js"; 
 const app = express();
 const baseUrl = process.env.BASE_PATH || '/api/v1';
 
@@ -41,7 +41,7 @@ app.use(`${baseUrl}/client`, clientRouter);
 app.use(`${baseUrl}/lawyer`, lawyerRouter);
 app.use(`${baseUrl}/cases`, caseRouter);
 app.use(`${baseUrl}/proposals`, proposalRouter);
-
+app.use(`${baseUrl}/staff`, staffRoutes);
 // Error Handling
 app.use(routeNotFoundMiddleware);
 app.use(customErrorHandler);

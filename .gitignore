@@ -3,8 +3,7 @@ node_modules/
 
 # env files
 .env
-package-lock.json
-package.json
+
 # logs
 logs
 *.log

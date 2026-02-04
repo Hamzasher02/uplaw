@@ -74,13 +74,6 @@ const clientProfileSchema = new mongoose.Schema({
         maxlength: [500, 'Bio cannot exceed 500 characters']
     },
 
-    // User Type
-    usertype: {
-        type: String,
-        enum: ['premium', 'normal'],
-        default: 'normal'
-    },
-
     // Profile Completion Tracking
     isProfileComplete: {
         type: Boolean,
