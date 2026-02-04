@@ -1,0 +1,864 @@
+{
+	"info": {
+		"_postman_id": "uplaw-backend-complete",
+		"name": "UPLAW Backend API - COMPLETE",
+		"description": "Complete API collection for UPLAW Legal Platform with ALL fields working correctly",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "baseUrl", "value": "http://localhost:3000/api/v1", "type": "string"},
+		{"key": "accessToken", "value": "", "type": "string"},
+		{"key": "refreshToken", "value": "", "type": "string"},
+		{"key": "caseId", "value": "", "type": "string"},
+		{"key": "proposalId", "value": "", "type": "string"},
+		{"key": "invitationId", "value": "", "type": "string"},
+		{"key": "lawyerId", "value": "", "type": "string"},
+		{"key": "clientEmail", "value": "testclient@example.com", "type": "string"},
+		{"key": "lawyerEmail", "value": "testlawyer@example.com", "type": "string"},
+		{"key": "password", "value": "Test@123", "type": "string"}
+	],
+	"item": [
+		{
+			"name": "01. Health Check",
+			"item": [
+				{
+					"name": "Welcome",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{baseUrl}}", "host": ["{{baseUrl}}"]}
+					}
+				},
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "02. Auth - Register",
+			"item": [
+				{
+					"name": "Register Client",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "fullName", "value": "Zarmina Nazir", "type": "text"},
+								{"key": "fatherName", "value": "Muhammad Nazir", "type": "text"},
+								{"key": "dateOfBirth", "value": "1990-05-15", "type": "text"},
+								{"key": "email", "value": "{{clientEmail}}", "type": "text"},
+								{"key": "phoneNumber", "value": "+923001234567", "type": "text"},
+								{"key": "password", "value": "{{password}}", "type": "text"},
+								{"key": "confirmPassword", "value": "{{password}}", "type": "text"},
+								{"key": "profilePicture", "type": "file", "src": []}
+							]
+						},
+						"url": {"raw": "{{baseUrl}}/auth/register/client", "host": ["{{baseUrl}}"], "path": ["auth", "register", "client"]}
+					}
+				},
+				{
+					"name": "Register Lawyer",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "fullName", "value": "Advocate Hamza Sher", "type": "text"},
+								{"key": "email", "value": "{{lawyerEmail}}", "type": "text"},
+								{"key": "phoneNumber", "value": "+923009876543", "type": "text"},
+								{"key": "barCouncil", "value": "Lahore High Court Bar", "type": "text"},
+								{"key": "licenseNo", "value": "LHC-2020-12345", "type": "text"},
+								{"key": "city", "value": "Lahore", "type": "text"},
+								{"key": "password", "value": "{{password}}", "type": "text"},
+								{"key": "confirmPassword", "value": "{{password}}", "type": "text"},
+								{"key": "profilePicture", "type": "file", "src": []}
+							]
+						},
+						"url": {"raw": "{{baseUrl}}/auth/register/lawyer", "host": ["{{baseUrl}}"], "path": ["auth", "register", "lawyer"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "03. Auth - Login",
+			"item": [
+				{
+					"name": "Login Client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var authHeader = pm.response.headers.get('Authorization');",
+									"if (authHeader) {",
+									"    pm.collectionVariables.set('accessToken', authHeader.replace('Bearer ', ''));",
+									"}",
+									"var refreshHeader = pm.response.headers.get('x-refresh-token');",
+									"if (refreshHeader) {",
+									"    pm.collectionVariables.set('refreshToken', refreshHeader);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "x-client-type", "value": "app"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"identifier\": \"{{clientEmail}}\",\n    \"password\": \"{{password}}\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"]}
+					}
+				},
+				{
+					"name": "Login Lawyer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var authHeader = pm.response.headers.get('Authorization');",
+									"if (authHeader) {",
+									"    pm.collectionVariables.set('accessToken', authHeader.replace('Bearer ', ''));",
+									"}",
+									"var refreshHeader = pm.response.headers.get('x-refresh-token');",
+									"if (refreshHeader) {",
+									"    pm.collectionVariables.set('refreshToken', refreshHeader);",
+									"}",
+									"var jsonData = pm.response.json();",
+									"if (jsonData[0] && jsonData[0].data && jsonData[0].data.user) {",
+									"    pm.collectionVariables.set('lawyerId', jsonData[0].data.user._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "x-client-type", "value": "app"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"identifier\": \"{{lawyerEmail}}\",\n    \"password\": \"{{password}}\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"]}
+					}
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"]}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var authHeader = pm.response.headers.get('Authorization');",
+									"if (authHeader) {",
+									"    pm.collectionVariables.set('accessToken', authHeader.replace('Bearer ', ''));",
+									"}",
+									"var refreshHeader = pm.response.headers.get('x-refresh-token');",
+									"if (refreshHeader) {",
+									"    pm.collectionVariables.set('refreshToken', refreshHeader);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "x-client-type", "value": "app"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/auth/refresh-token", "host": ["{{baseUrl}}"], "path": ["auth", "refresh-token"]}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "04. Auth - OTP & Password",
+			"item": [
+				{
+					"name": "Verify OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"},
+							{"key": "x-client-type", "value": "app"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{clientEmail}}\",\n    \"otp\": \"123456\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/auth/verify-otp", "host": ["{{baseUrl}}"], "path": ["auth", "verify-otp"]}
+					}
+				},
+				{
+					"name": "Resend OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{clientEmail}}\",\n    \"type\": \"email\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/auth/resend-otp", "host": ["{{baseUrl}}"], "path": ["auth", "resend-otp"]}
+					}
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"identifier\": \"{{clientEmail}}\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["auth", "forgot-password"]}
+					}
+				},
+				{
+					"name": "Verify Reset OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{clientEmail}}\",\n    \"otp\": \"123456\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/auth/verify-reset-otp", "host": ["{{baseUrl}}"], "path": ["auth", "verify-reset-otp"]}
+					}
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{clientEmail}}\",\n    \"resetToken\": \"YOUR_RESET_TOKEN_HERE\",\n    \"newPassword\": \"NewPassword@123\",\n    \"confirmNewPassword\": \"NewPassword@123\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/auth/reset-password", "host": ["{{baseUrl}}"], "path": ["auth", "reset-password"]}
+					}
+				},
+				{
+					"name": "Delete Account",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/auth/delete-account", "host": ["{{baseUrl}}"], "path": ["auth", "delete-account"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "05. Client Profile",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/client/profile", "host": ["{{baseUrl}}"], "path": ["client", "profile"]}
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "fullName", "value": "Zarmina Nazir", "type": "text"},
+								{"key": "fullNameUrdu", "value": "زرمینہ نذیر", "type": "text"},
+								{"key": "fatherName", "value": "Muhammad Nazir", "type": "text"},
+								{"key": "dateOfBirth", "value": "1990-05-15", "type": "text"},
+								{"key": "gender", "value": "female", "type": "text"},
+								{"key": "cnic", "value": "35201-1234567-8", "type": "text"},
+								{"key": "city", "value": "Lahore", "type": "text"},
+								{"key": "province", "value": "Punjab", "type": "text"},
+								{"key": "postalAddress", "value": "123 Main Boulevard, Gulberg III, Lahore 54000", "type": "text"},
+								{"key": "whatsappNumber", "value": "+923001234567", "type": "text"},
+								{"key": "preferredLanguage", "value": "en", "type": "text"},
+								{"key": "bio", "value": "Business professional seeking legal assistance.", "type": "text"},
+								{"key": "profilePicture", "type": "file", "src": []},
+								{"key": "cnicDocument", "type": "file", "src": []}
+							]
+						},
+						"url": {"raw": "{{baseUrl}}/client/profile", "host": ["{{baseUrl}}"], "path": ["client", "profile"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "06. Lawyer Profile",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/lawyer/profile", "host": ["{{baseUrl}}"], "path": ["lawyer", "profile"]}
+					}
+				},
+				{
+					"name": "Get Completion Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/lawyer/profile/completion", "host": ["{{baseUrl}}"], "path": ["lawyer", "profile", "completion"]}
+					}
+				},
+				{
+					"name": "Step 1 - Basic Info",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fullName\": \"Advocate Hamza Sher\",\n    \"fullNameUrdu\": \"حمزہ شیر\",\n    \"email\": \"{{lawyerEmail}}\",\n    \"phoneNumber\": \"+923009876543\",\n    \"dateOfBirth\": \"1985-03-20\",\n    \"city\": \"Lahore\",\n    \"postalAddress\": \"456 Court Road, Mall Road, Lahore\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/lawyer/profile/step/1", "host": ["{{baseUrl}}"], "path": ["lawyer", "profile", "step", "1"]}
+					}
+				},
+				{
+					"name": "Step 2 - Qualifications",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "degree", "value": "LLB, LLM", "type": "text"},
+								{"key": "university", "value": "Punjab University Law College", "type": "text"},
+								{"key": "passingYear", "value": "2008", "type": "text"},
+								{"key": "licenseNo", "value": "LHC-2009-12345", "type": "text"},
+								{"key": "associationBar", "value": "Lahore High Court Bar Association", "type": "text"},
+								{"key": "barCity", "value": "Lahore", "type": "text"},
+								{"key": "yearsOfExperience", "value": "15", "type": "text"},
+								{"key": "degreeCertificate", "type": "file", "src": []},
+								{"key": "barLicenseDocument", "type": "file", "src": []}
+							]
+						},
+						"url": {"raw": "{{baseUrl}}/lawyer/profile/step/2", "host": ["{{baseUrl}}"], "path": ["lawyer", "profile", "step", "2"]}
+					}
+				},
+				{
+					"name": "Step 3 - Practice Areas",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"areasOfPractice\": [\"Family Law\", \"Property Law\", \"Criminal Law\", \"Corporate Law\"],\n    \"courtJurisdiction\": [\"High Court\", \"Session Court\", \"District Court\"],\n    \"languagesSpoken\": [\"en\", \"ur\", \"pa\"],\n    \"servicesOffered\": [\"Legal Consultation\", \"Court Representation\", \"Document Drafting\", \"Mediation\"]\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/lawyer/profile/step/3", "host": ["{{baseUrl}}"], "path": ["lawyer", "profile", "step", "3"]}
+					}
+				},
+				{
+					"name": "Step 4 - Availability",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"availabilityStatus\": \"available\",\n    \"professionalBio\": \"Senior Advocate with 15+ years of experience in Family Law, Property disputes, and Criminal matters.\",\n    \"practiceLocations\": [\n        {\n            \"status\": \"available\",\n            \"location\": \"Lahore High Court\",\n            \"schedule\": [\n                {\"days\": \"Mon-Thu\", \"from\": \"09:00 AM\", \"to\": \"05:00 PM\"}\n            ]\n        }\n    ]\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/lawyer/profile/step/4", "host": ["{{baseUrl}}"], "path": ["lawyer", "profile", "step", "4"]}
+					}
+				},
+				{
+					"name": "Step 5 - Documents",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "cnic", "value": "35201-9876543-2", "type": "text"},
+								{"key": "cnicDocument", "type": "file", "src": []},
+								{"key": "barLicenseDocument", "type": "file", "src": []}
+							]
+						},
+						"url": {"raw": "{{baseUrl}}/lawyer/profile/step/5", "host": ["{{baseUrl}}"], "path": ["lawyer", "profile", "step", "5"]}
+					}
+				},
+				{
+					"name": "Update Profile Picture",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "profilePicture", "type": "file", "src": []}
+							]
+						},
+						"url": {"raw": "{{baseUrl}}/lawyer/profile/picture", "host": ["{{baseUrl}}"], "path": ["lawyer", "profile", "picture"]}
+					}
+				},
+				{
+					"name": "Unified Update (All Fields)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "fullName", "value": "Advocate Hamza Sher", "type": "text"},
+								{"key": "fullNameUrdu", "value": "حمزہ شیر", "type": "text"},
+								{"key": "dateOfBirth", "value": "1985-03-20", "type": "text"},
+								{"key": "city", "value": "Lahore", "type": "text"},
+								{"key": "postalAddress", "value": "456 Court Road, Lahore", "type": "text"},
+								{"key": "degree", "value": "LLB, LLM", "type": "text"},
+								{"key": "university", "value": "Punjab University Law College", "type": "text"},
+								{"key": "passingYear", "value": "2008", "type": "text"},
+								{"key": "licenseNo", "value": "LHC-2009-12345", "type": "text"},
+								{"key": "associationBar", "value": "Lahore High Court Bar", "type": "text"},
+								{"key": "barCity", "value": "Lahore", "type": "text"},
+								{"key": "yearsOfExperience", "value": "15", "type": "text"},
+								{"key": "areasOfPractice", "value": "[\"Family Law\", \"Property Law\"]", "type": "text"},
+								{"key": "courtJurisdiction", "value": "[\"High Court\", \"Session Court\"]", "type": "text"},
+								{"key": "languagesSpoken", "value": "[\"en\", \"ur\"]", "type": "text"},
+								{"key": "servicesOffered", "value": "[\"Legal Consultation\", \"Court Representation\"]", "type": "text"},
+								{"key": "availabilityStatus", "value": "available", "type": "text"},
+								{"key": "professionalBio", "value": "Senior Advocate with 15+ years experience", "type": "text"},
+								{"key": "cnic", "value": "35201-9876543-2", "type": "text"},
+								{"key": "profilePhoto", "type": "file", "src": []},
+								{"key": "cnicDocument", "type": "file", "src": []},
+								{"key": "barLicenseDocument", "type": "file", "src": []},
+								{"key": "degreeCertificate", "type": "file", "src": []}
+							]
+						},
+						"url": {"raw": "{{baseUrl}}/lawyer/profile", "host": ["{{baseUrl}}"], "path": ["lawyer", "profile"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "07. Cases - Client",
+			"item": [
+				{
+					"name": "Create Case",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData[0] && jsonData[0].data && jsonData[0].data.case) {",
+									"    pm.collectionVariables.set('caseId', jsonData[0].data.case._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "title", "value": "Property Inheritance Dispute - Father's Estate", "type": "text", "description": "Required - max 200 chars"},
+								{"key": "description", "value": "I am facing a property inheritance dispute with my siblings regarding our late father's estate. The property includes a house in Gulberg III, Lahore and agricultural land in Sheikhupura. My father passed away 6 months ago without a will. I need legal assistance to get proper succession certificate and ensure fair distribution according to Islamic law.", "type": "text", "description": "Required - max 2000 chars"},
+								{"key": "category", "value": "Family Law", "type": "text", "description": "Required - Legal category"},
+								{"key": "budgetRange", "value": "100000-200000", "type": "text", "description": "Required - 25000-50000, 50000-100000, 100000-200000, 200000-500000, 500000+"},
+								{"key": "province", "value": "Punjab", "type": "text", "description": "Required"},
+								{"key": "district", "value": "Lahore", "type": "text", "description": "Required"},
+								{"key": "court", "value": "District Court, Lahore", "type": "text", "description": "Optional"},
+								{"key": "urgency", "value": "high", "type": "text", "description": "Optional - low, medium, high, urgent"},
+								{"key": "preferredLanguages", "value": "[\"English\", \"Urdu\"]", "type": "text", "description": "Optional - JSON array"},
+								{"key": "voiceNote", "type": "file", "src": [], "description": "Optional - Audio file (MP3, WAV, OGG, M4A, WEBM)"}
+							]
+						},
+						"url": {"raw": "{{baseUrl}}/cases", "host": ["{{baseUrl}}"], "path": ["cases"]}
+					}
+				},
+				{
+					"name": "Get My Cases",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/cases", "host": ["{{baseUrl}}"], "path": ["cases"]}
+					}
+				},
+				{
+					"name": "Get My Cases (Active)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/cases?status=active",
+							"host": ["{{baseUrl}}"],
+							"path": ["cases"],
+							"query": [{"key": "status", "value": "active"}]
+						}
+					}
+				},
+				{
+					"name": "Get Case By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/cases/{{caseId}}", "host": ["{{baseUrl}}"], "path": ["cases", "{{caseId}}"]}
+					}
+				},
+				{
+					"name": "Get Suggested Lawyers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/cases/{{caseId}}/lawyers", "host": ["{{baseUrl}}"], "path": ["cases", "{{caseId}}", "lawyers"]}
+					}
+				},
+				{
+					"name": "Invite Lawyers",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lawyerIds\": [\"{{lawyerId}}\"]\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/cases/{{caseId}}/invite", "host": ["{{baseUrl}}"], "path": ["cases", "{{caseId}}", "invite"]}
+					}
+				},
+				{
+					"name": "Update Case Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"cancelled\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/cases/{{caseId}}/status", "host": ["{{baseUrl}}"], "path": ["cases", "{{caseId}}", "status"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "08. Cases - Lawyer",
+			"item": [
+				{
+					"name": "Get Received Invitations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData[0] && jsonData[0].data && jsonData[0].data.invitations && jsonData[0].data.invitations[0]) {",
+									"    pm.collectionVariables.set('invitationId', jsonData[0].data.invitations[0]._id);",
+									"    if (jsonData[0].data.invitations[0].caseId) {",
+									"        pm.collectionVariables.set('caseId', jsonData[0].data.invitations[0].caseId._id || jsonData[0].data.invitations[0].caseId);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/cases/received", "host": ["{{baseUrl}}"], "path": ["cases", "received"]}
+					}
+				},
+				{
+					"name": "Get Received (Pending)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/cases/received?status=pending",
+							"host": ["{{baseUrl}}"],
+							"path": ["cases", "received"],
+							"query": [{"key": "status", "value": "pending"}]
+						}
+					}
+				},
+				{
+					"name": "Accept Invitation",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"accepted\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/cases/invitations/{{invitationId}}/status", "host": ["{{baseUrl}}"], "path": ["cases", "invitations", "{{invitationId}}", "status"]}
+					}
+				},
+				{
+					"name": "Decline Invitation",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"declined\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/cases/invitations/{{invitationId}}/status", "host": ["{{baseUrl}}"], "path": ["cases", "invitations", "{{invitationId}}", "status"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "09. Proposals - Lawyer",
+			"item": [
+				{
+					"name": "Submit Proposal",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData[0] && jsonData[0].data && jsonData[0].data.proposal) {",
+									"    pm.collectionVariables.set('proposalId', jsonData[0].data.proposal._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"caseId\": \"{{caseId}}\",\n    \"proposedFee\": 75000,\n    \"timeline\": \"6-8 months\",\n    \"caseAssessment\": \"After reviewing your case details, I believe this is a strong case. I have handled 50+ similar inheritance cases with a 95% success rate. I can help you resolve this matter efficiently.\",\n    \"servicesIncluded\": \"1. Document Review\\n2. Legal Opinion\\n3. Family Mediation\\n4. Court Filing\\n5. All Court Appearances\\n6. Regular Updates\",\n    \"experienceAndQualifications\": \"15 years experience in Family Law. LLB from Punjab University. Member Lahore High Court Bar Association.\",\n    \"feeStructure\": {\n        \"totalProposedFee\": 75000,\n        \"initialConsultation\": 0,\n        \"documentationFee\": 25000,\n        \"courtFees\": 15000,\n        \"additionalCosts\": 0,\n        \"paymentTerms\": \"30% upfront, 40% at midpoint, 30% upon completion\"\n    },\n    \"milestones\": [\n        {\n            \"title\": \"Document Review\",\n            \"description\": \"Review all property documents\",\n            \"expectedDuration\": \"1 week\"\n        },\n        {\n            \"title\": \"Mediation\",\n            \"description\": \"Attempt family mediation\",\n            \"expectedDuration\": \"2-4 weeks\"\n        },\n        {\n            \"title\": \"Court Filing\",\n            \"description\": \"File case in court\",\n            \"expectedDuration\": \"1 week\"\n        },\n        {\n            \"title\": \"Court Proceedings\",\n            \"description\": \"Attend all hearings\",\n            \"expectedDuration\": \"4-6 months\"\n        }\n    ],\n    \"termsAndConditions\": \"1. Payment as per agreed schedule.\\n2. Client to provide all required documents.\\n3. Court fees are separate.\\n4. Timeline is estimated.\",\n    \"availability\": \"Available Mon-Fri 9AM-5PM. Emergency contact available 24/7.\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/proposals", "host": ["{{baseUrl}}"], "path": ["proposals"]}
+					}
+				},
+				{
+					"name": "Get Sent Proposals",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/proposals/sent", "host": ["{{baseUrl}}"], "path": ["proposals", "sent"]}
+					}
+				},
+				{
+					"name": "Get Sent (Pending)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/proposals/sent?status=pending",
+							"host": ["{{baseUrl}}"],
+							"path": ["proposals", "sent"],
+							"query": [{"key": "status", "value": "pending"}]
+						}
+					}
+				},
+				{
+					"name": "Withdraw Proposal",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/proposals/{{proposalId}}/withdraw", "host": ["{{baseUrl}}"], "path": ["proposals", "{{proposalId}}", "withdraw"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "10. Proposals - Client",
+			"item": [
+				{
+					"name": "Get Received Proposals",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData[0] && jsonData[0].data && jsonData[0].data.proposals && jsonData[0].data.proposals[0]) {",
+									"    pm.collectionVariables.set('proposalId', jsonData[0].data.proposals[0]._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/proposals/received", "host": ["{{baseUrl}}"], "path": ["proposals", "received"]}
+					}
+				},
+				{
+					"name": "Get Received (By Case)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/proposals/received?caseId={{caseId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["proposals", "received"],
+							"query": [{"key": "caseId", "value": "{{caseId}}"}]
+						}
+					}
+				},
+				{
+					"name": "Get Proposal By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"}
+						],
+						"url": {"raw": "{{baseUrl}}/proposals/{{proposalId}}", "host": ["{{baseUrl}}"], "path": ["proposals", "{{proposalId}}"]}
+					}
+				},
+				{
+					"name": "Accept Proposal",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"accept\",\n    \"responseNote\": \"Thank you for your proposal. Looking forward to working with you.\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/proposals/{{proposalId}}/respond", "host": ["{{baseUrl}}"], "path": ["proposals", "{{proposalId}}", "respond"]}
+					}
+				},
+				{
+					"name": "Reject Proposal",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{accessToken}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"reject\",\n    \"responseNote\": \"Thank you for your proposal. I have decided to go with another lawyer.\"\n}"
+						},
+						"url": {"raw": "{{baseUrl}}/proposals/{{proposalId}}/respond", "host": ["{{baseUrl}}"], "path": ["proposals", "{{proposalId}}", "respond"]}
+					}
+				}
+			]
+		}
+	]
+}

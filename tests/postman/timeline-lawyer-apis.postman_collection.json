@@ -1,0 +1,880 @@
+{
+    "info": {
+        "_postman_id": "uplaw-timeline-lawyer-apis",
+        "name": "UPLAW Timeline - Lawyer APIs",
+        "description": "Lawyer-specific timeline APIs: Submit phases (1-5), add court hearing subphases, complete court hearing",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Phase Submissions",
+            "item": [
+                {
+                    "name": "Submit Phase 1 - Case Intake (Success)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response is array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success is true\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(true);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Progress updated to 20%\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.progress).to.equal(20);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Phase 2 is now ongoing\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.phases.phase2CaseFiled.status).to.equal('ongoing');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Initial review completed",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "All client documents collected and verified",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "opponentRemarks",
+                                    "value": "No opposition at intake stage",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "documents",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-intake/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-intake",
+                                "submit"
+                            ]
+                        },
+                        "description": "Submit Phase 1 data. Should succeed and move progress to 20%."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit Phase 1 Again (Should Fail - Completed)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 400\", function () {",
+                                    "    pm.response.to.have.status(400);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response is array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success is false\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(false);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Error about completed phase\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].message.toLowerCase()).to.include('completed');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "Attempting to resubmit",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-intake/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-intake",
+                                "submit"
+                            ]
+                        },
+                        "description": "Attempt to resubmit Phase 1. Should fail with 400 - phase already completed."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit Phase 3 Out of Order (Should Fail - Pending)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 400\", function () {",
+                                    "    pm.response.to.have.status(400);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response is array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success is false\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(false);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Error about pending/ongoing phase\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.satisfy(function(m) {",
+                                    "        return m.includes('pending') || m.includes('ongoing');",
+                                    "    });",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "Trying to skip phase 2",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/trial-preparation/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "trial-preparation",
+                                "submit"
+                            ]
+                        },
+                        "description": "Attempt to submit Phase 3 before Phase 2. Should fail with 400 - phase is pending."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit Phase 2 - Case Filed (Success)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response is array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success is true\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(true);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Progress updated to 40%\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.progress).to.equal(40);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Case filed and docket number assigned",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "All filings completed with court",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "opponentRemarks",
+                                    "value": "Acknowledgment received",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "documents",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-filed/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-filed",
+                                "submit"
+                            ]
+                        },
+                        "description": "Submit Phase 2 data. Should succeed and move progress to 40%."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit Phase 3 - Trial Preparation (Success)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response is array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success is true\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(true);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Progress updated to 60%\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.progress).to.equal(60);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Discovery phase completed",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "All evidence and witness statements prepared",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "opponentRemarks",
+                                    "value": "Ready for trial",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "documents",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/trial-preparation/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "trial-preparation",
+                                "submit"
+                            ]
+                        },
+                        "description": "Submit Phase 3 data. Should succeed and move progress to 60%."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Court Hearing (Phase 4)",
+            "item": [
+                {
+                    "name": "Complete Court Hearing Without Subphase (Should Fail)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 400\", function () {",
+                                    "    pm.response.to.have.status(400);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response is array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success is false\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(false);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Error about subphase required\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.satisfy(function(m) {",
+                                    "        return m.includes('subphase') || m.includes('at least one');",
+                                    "    });",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/court-hearing/complete",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "court-hearing",
+                                "complete"
+                            ]
+                        },
+                        "description": "Attempt to complete court hearing without adding a subphase. Should fail with 400."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Court Hearing Subphase (Success)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response is array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success is true\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(true);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Subphase count increased\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.totalSubPhases).to.be.greaterThan(0);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "First Hearing Session",
+                                    "type": "text",
+                                    "description": "REQUIRED"
+                                },
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Opening arguments heard",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "Strong case presented with evidence",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "opponentRemarks",
+                                    "value": "Objections noted for record",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "documents",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/court-hearing/subphases",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "court-hearing",
+                                "subphases"
+                            ]
+                        },
+                        "description": "Add a court hearing subphase. Name is required."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Complete Court Hearing Phase (Success)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response is array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success is true\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(true);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Progress updated to 80%\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.progress).to.equal(80);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/court-hearing/complete",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "court-hearing",
+                                "complete"
+                            ]
+                        },
+                        "description": "Complete court hearing phase. Should succeed now that subphase exists. Progress moves to 80%."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Case Outcome (Phase 5)",
+            "item": [
+                {
+                    "name": "Submit Phase 5 Without Outcome (Should Fail)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 400\", function () {",
+                                    "    pm.response.to.have.status(400);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response is array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success is false\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(false);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Error about outcome required\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.include('outcome');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Final verdict recorded",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "Case concluded",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "opponentRemarks",
+                                    "value": "No further objections",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-outcome/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-outcome",
+                                "submit"
+                            ]
+                        },
+                        "description": "Attempt to submit Phase 5 without outcome field. Should fail with 400."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit Phase 5 With Outcome (Success)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response is array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success is true\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(true);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Progress updated to 100%\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.progress).to.equal(100);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Case status is completed\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.caseStatus).to.equal('completed');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "outcome",
+                                    "value": "won",
+                                    "type": "text",
+                                    "description": "REQUIRED: won, settled, or dismissed"
+                                },
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Verdict in favor of plaintiff",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "Successfully won the case for client",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "opponentRemarks",
+                                    "value": "Judgment accepted",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "documents",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-outcome/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-outcome",
+                                "submit"
+                            ]
+                        },
+                        "description": "Submit Phase 5 with outcome. Should succeed and move progress to 100%, marking case as completed."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Authorization Tests",
+            "item": [
+                {
+                    "name": "Unauthorized Lawyer Submit Phase (Should Fail)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 403\", function () {",
+                                    "    pm.response.to.have.status(403);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response is array\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success is false\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(false);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Forbidden error message\", function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.satisfy(function(m) {",
+                                    "        return m.includes('forbidden') || m.includes('not authorized') || m.includes('not assigned');",
+                                    "    });",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{otherLawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "Unauthorized submission attempt",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-intake/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-intake",
+                                "submit"
+                            ]
+                        },
+                        "description": "Attempt to submit phase using unassigned lawyer's token. Should fail with 403 Forbidden."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}

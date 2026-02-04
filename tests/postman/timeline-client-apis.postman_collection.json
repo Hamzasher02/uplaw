@@ -1,0 +1,198 @@
+{
+    "info": {
+        "_postman_id": "uplaw-timeline-client-apis",
+        "name": "UPLAW Timeline - Client APIs",
+        "description": "Client-specific timeline APIs: Accept Proposal (triggers timeline creation) and Get Timeline",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Accept Proposal (Timeline Auto-Created)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response is array\", function () {",
+                            "    const jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "pm.test(\"Has success flag\", function () {",
+                            "    const jsonData = pm.response.json();",
+                            "    pm.expect(jsonData[0]).to.have.property('success');",
+                            "    pm.expect(jsonData[0].success).to.be.a('boolean');",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{clientToken}}",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"action\": \"accept\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/v1/proposals/{{proposalId}}/respond",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "proposals",
+                        "{{proposalId}}",
+                        "respond"
+                    ]
+                },
+                "description": "Client accepts proposal, triggering automatic timeline creation with 5 phases. Phase 1 starts as 'ongoing', rest are 'pending'."
+            },
+            "response": []
+        },
+        {
+            "name": "Get Timeline (Client Owner)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response is array\", function () {",
+                            "    const jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "pm.test(\"Has success flag true\", function () {",
+                            "    const jsonData = pm.response.json();",
+                            "    pm.expect(jsonData[0].success).to.equal(true);",
+                            "});",
+                            "",
+                            "pm.test(\"Timeline has 5 phases\", function () {",
+                            "    const jsonData = pm.response.json();",
+                            "    const phases = jsonData[0].data.phases;",
+                            "    pm.expect(phases).to.have.all.keys(",
+                            "        'phase1CaseIntake',",
+                            "        'phase2CaseFiled',",
+                            "        'phase3TrialPreparation',",
+                            "        'phase4CourtHearing',",
+                            "        'phase5Outcome'",
+                            "    );",
+                            "});",
+                            "",
+                            "pm.test(\"Phase 1 is ongoing\", function () {",
+                            "    const jsonData = pm.response.json();",
+                            "    pm.expect(jsonData[0].data.phases.phase1CaseIntake.status).to.equal('ongoing');",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{clientToken}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/timeline",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "cases",
+                        "{{caseId}}",
+                        "timeline"
+                    ]
+                },
+                "description": "Get timeline for a case. Available to case owner (client) or assigned lawyer."
+            },
+            "response": []
+        },
+        {
+            "name": "Unauthorized - Get Other Client's Timeline",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 403\", function () {",
+                            "    pm.response.to.have.status(403);",
+                            "});",
+                            "",
+                            "pm.test(\"Response is array\", function () {",
+                            "    const jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "pm.test(\"Success is false\", function () {",
+                            "    const jsonData = pm.response.json();",
+                            "    pm.expect(jsonData[0].success).to.equal(false);",
+                            "});",
+                            "",
+                            "pm.test(\"Forbidden error message\", function () {",
+                            "    const jsonData = pm.response.json();",
+                            "    const msg = jsonData[0].message.toLowerCase();",
+                            "    pm.expect(msg).to.satisfy(function(m) {",
+                            "        return m.includes('forbidden') || m.includes('not authorized') || m.includes('access denied');",
+                            "    });",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{otherClientToken}}",
+                        "type": "text"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/timeline",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "cases",
+                        "{{caseId}}",
+                        "timeline"
+                    ]
+                },
+                "description": "Attempt to get timeline using different client's token. Should fail with 403 Forbidden."
+            },
+            "response": []
+        }
+    ]
+}

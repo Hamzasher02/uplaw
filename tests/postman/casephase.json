@@ -1,0 +1,1135 @@
+{
+    "info": {
+        "_postman_id": "uplaw-timeline-feature-v1",
+        "name": "UPLAW - Timeline Feature APIs",
+        "description": "Production-ready Timeline APIs with 403/401 authorization, Cloudinary rollback, and atomic updates. Includes success and failure test cases.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "01 - Get Timeline",
+            "item": [
+                {
+                    "name": "Get Timeline - Success (Client Owner)",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "console.log('GET Timeline - Using caseId:', pm.collectionVariables.get('caseId'));",
+                                    "console.log('GET Timeline - Using clientToken:', pm.collectionVariables.get('clientToken') ? 'SET' : 'NOT SET');"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response is array', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test('Has success flag true', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(true);",
+                                    "});",
+                                    "",
+                                    "pm.test('Timeline has 5 phases', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const phases = jsonData[0].data.phases;",
+                                    "    pm.expect(phases).to.have.all.keys(",
+                                    "        'phase1CaseIntake',",
+                                    "        'phase2CaseFiled',",
+                                    "        'phase3TrialPreparation',",
+                                    "        'phase4CourtHearing',",
+                                    "        'phase5Outcome'",
+                                    "    );",
+                                    "});",
+                                    "",
+                                    "pm.test('Has progress field', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.progress).to.be.a('number');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{clientToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/timeline",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "timeline"
+                            ]
+                        },
+                        "description": "Client owner retrieves timeline for their case. Returns all 5 phases with current status and progress percentage."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Timeline - Success (Assigned Lawyer)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response is array', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test('Has success flag true', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(true);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/timeline",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "timeline"
+                            ]
+                        },
+                        "description": "Assigned lawyer retrieves timeline for case they're working on."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Timeline - 403 Forbidden (Not Owner)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 403', function () {",
+                                    "    pm.response.to.have.status(403);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response is array', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test('Success is false', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(false);",
+                                    "});",
+                                    "",
+                                    "pm.test('Error message contains forbidden/access', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.satisfy(function(m) {",
+                                    "        return m.includes('forbidden') || m.includes('own') || m.includes('assigned');",
+                                    "    });",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{otherClientToken}}",
+                                "type": "text",
+                                "description": "Use different client's token"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/timeline",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "timeline"
+                            ]
+                        },
+                        "description": "Client tries to view timeline of case they don't own. Should return 403 FORBIDDEN."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Timeline - 401 Unauthorized (No Token)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 401', function () {",
+                                    "    pm.response.to.have.status(401);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/timeline",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "timeline"
+                            ]
+                        },
+                        "description": "Request without authentication token. Should return 401 UNAUTHORIZED from auth middleware."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "02 - Submit Phase Data",
+            "item": [
+                {
+                    "name": "Submit Phase 1 - Case Intake (Success)",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "console.log('Submitting Phase 1 (case-intake)');",
+                                    "console.log('Using lawyerToken:', pm.collectionVariables.get('lawyerToken') ? 'SET' : 'NOT SET');"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response is array', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test('Success is true', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(true);",
+                                    "});",
+                                    "",
+                                    "pm.test('Progress updated to 20%', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.progress).to.equal(20);",
+                                    "});",
+                                    "",
+                                    "pm.test('Phase 1 is completed', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.phases.phase1CaseIntake.status).to.equal('completed');",
+                                    "});",
+                                    "",
+                                    "pm.test('Phase 2 is now ongoing', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.phases.phase2CaseFiled.status).to.equal('ongoing');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Initial case review completed",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "All client documents collected and verified",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "opponentRemarks",
+                                    "value": "No opposition at intake stage",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "documents",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true,
+                                    "description": "Optional: Upload documents (max 10 files)"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-intake/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-intake",
+                                "submit"
+                            ]
+                        },
+                        "description": "Lawyer submits Phase 1 data. Atomically completes phase1 and activates phase2."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit Phase 2 - Case Filed (Success)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Progress updated to 40%', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.progress).to.equal(40);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Case filed and docket number assigned",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "All court filings completed",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "opponentRemarks",
+                                    "value": "Acknowledgment received",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-filed/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-filed",
+                                "submit"
+                            ]
+                        },
+                        "description": "Submit Phase 2. Progress moves to 40%, phase3 becomes ongoing."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit Phase 5 - Case Outcome with Won (Success)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Progress updated to 100%', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.progress).to.equal(100);",
+                                    "});",
+                                    "",
+                                    "pm.test('Phase 5 is completed', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.phases.phase5Outcome.status).to.equal('completed');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "outcome",
+                                    "value": "won",
+                                    "type": "text",
+                                    "description": "REQUIRED: won, settled, or dismissed"
+                                },
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Verdict in favor of plaintiff",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "Successfully won the case for client",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "opponentRemarks",
+                                    "value": "Judgment accepted",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "documents",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-outcome/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-outcome",
+                                "submit"
+                            ]
+                        },
+                        "description": "Submit Phase 5 with outcome. Progress reaches 100%, case status becomes completed."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit Phase - 400 Bad Request (Already Completed)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 400', function () {",
+                                    "    pm.response.to.have.status(400);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response is array', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test('Success is false', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(false);",
+                                    "});",
+                                    "",
+                                    "pm.test('Error about phase not ongoing', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.satisfy(function(m) {",
+                                    "        return m.includes('ongoing') || m.includes('completed');",
+                                    "    });",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "Attempting to resubmit completed phase",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-intake/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-intake",
+                                "submit"
+                            ]
+                        },
+                        "description": "Attempt to resubmit already completed phase. Atomic update prevents this, returns 400."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit Phase 5 - 400 Bad Request (Missing Outcome)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 400', function () {",
+                                    "    pm.response.to.have.status(400);",
+                                    "});",
+                                    "",
+                                    "pm.test('Error mentions outcome required', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.include('outcome');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Final verdict recorded",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "Case concluded",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-outcome/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-outcome",
+                                "submit"
+                            ]
+                        },
+                        "description": "Phase 5 requires outcome field. Missing it returns 400."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Submit Phase - 403 Forbidden (Not Assigned Lawyer)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 403', function () {",
+                                    "    pm.response.to.have.status(403);",
+                                    "});",
+                                    "",
+                                    "pm.test('Success is false', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(false);",
+                                    "});",
+                                    "",
+                                    "pm.test('Error contains forbidden/assigned', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.satisfy(function(m) {",
+                                    "        return m.includes('forbidden') || m.includes('assigned');",
+                                    "    });",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{otherLawyerToken}}",
+                                "type": "text",
+                                "description": "Use unassigned lawyer's token"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "Unauthorized submission attempt",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/case-intake/submit",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "case-intake",
+                                "submit"
+                            ]
+                        },
+                        "description": "Lawyer not assigned to case tries to submit phase. Returns 403 FORBIDDEN."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "03 - Court Hearing (Phase 4)",
+            "item": [
+                {
+                    "name": "Add Court Hearing Subphase (Success)",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "console.log('Adding court hearing subphase');"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response is array', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test('Success is true', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(true);",
+                                    "});",
+                                    "",
+                                    "pm.test('Subphase count increased', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.totalSubPhases).to.be.greaterThan(0);",
+                                    "});",
+                                    "",
+                                    "pm.test('Progress is 60% (phase4 ongoing)', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.progress).to.equal(60);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "First Hearing Session",
+                                    "type": "text",
+                                    "description": "REQUIRED: Subphase name (3-200 chars)"
+                                },
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Opening arguments heard",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "lawyerRemarks",
+                                    "value": "Strong case presented with evidence",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "opponentRemarks",
+                                    "value": "Objections noted for record",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "documents",
+                                    "type": "file",
+                                    "src": [],
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/court-hearing/subphases",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "court-hearing",
+                                "subphases"
+                            ]
+                        },
+                        "description": "Atomically adds subphase to court hearing phase. Name field is required."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Court Hearing Subphase - 400 (Missing Name)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 400', function () {",
+                                    "    pm.response.to.have.status(400);",
+                                    "});",
+                                    "",
+                                    "pm.test('Error mentions name required', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.include('name');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "judgeCourtRemarks",
+                                    "value": "Attempting to add subphase without name",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/court-hearing/subphases",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "court-hearing",
+                                "subphases"
+                            ]
+                        },
+                        "description": "Name field is required for subphase. Returns 400 if missing."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Court Hearing Subphase - 403 (Not Assigned)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 403', function () {",
+                                    "    pm.response.to.have.status(403);",
+                                    "});",
+                                    "",
+                                    "pm.test('Error contains forbidden', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.satisfy(function(m) {",
+                                    "        return m.includes('forbidden') || m.includes('assigned');",
+                                    "    });",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{otherLawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Unauthorized subphase",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/court-hearing/subphases",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "court-hearing",
+                                "subphases"
+                            ]
+                        },
+                        "description": "Unassigned lawyer attempts to add subphase. Returns 403 FORBIDDEN."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Complete Court Hearing Phase (Success)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 200', function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test('Response is array', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.be.an('array');",
+                                    "});",
+                                    "",
+                                    "pm.test('Success is true', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].success).to.equal(true);",
+                                    "});",
+                                    "",
+                                    "pm.test('Progress updated to 80%', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.progress).to.equal(80);",
+                                    "});",
+                                    "",
+                                    "pm.test('Phase 4 is completed', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.phases.phase4CourtHearing.status).to.equal('completed');",
+                                    "});",
+                                    "",
+                                    "pm.test('Phase 5 is now ongoing', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData[0].data.phases.phase5Outcome.status).to.equal('ongoing');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/court-hearing/complete",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "court-hearing",
+                                "complete"
+                            ]
+                        },
+                        "description": "Atomically completes court hearing phase and activates phase5. Requires at least 1 subphase."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Complete Court Hearing - 400 (No Subphases)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 400', function () {",
+                                    "    pm.response.to.have.status(400);",
+                                    "});",
+                                    "",
+                                    "pm.test('Error about subphase required', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.satisfy(function(m) {",
+                                    "        return m.includes('subphase') || m.includes('at least one');",
+                                    "    });",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{lawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/court-hearing/complete",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "court-hearing",
+                                "complete"
+                            ]
+                        },
+                        "description": "Attempt to complete court hearing without subphases. Returns 400."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Complete Court Hearing - 403 (Not Assigned)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status code is 403', function () {",
+                                    "    pm.response.to.have.status(403);",
+                                    "});",
+                                    "",
+                                    "pm.test('Error contains forbidden', function () {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    const msg = jsonData[0].message.toLowerCase();",
+                                    "    pm.expect(msg).to.satisfy(function(m) {",
+                                    "        return m.includes('forbidden') || m.includes('assigned');",
+                                    "    });",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{otherLawyerToken}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/cases/{{caseId}}/phases/court-hearing/complete",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "cases",
+                                "{{caseId}}",
+                                "phases",
+                                "court-hearing",
+                                "complete"
+                            ]
+                        },
+                        "description": "Unassigned lawyer attempts to complete phase. Returns 403 FORBIDDEN."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:5000",
+            "type": "default"
+        },
+        {
+            "key": "clientToken",
+            "value": "",
+            "type": "secret"
+        },
+        {
+            "key": "lawyerToken",
+            "value": "",
+            "type": "secret"
+        },
+        {
+            "key": "otherClientToken",
+            "value": "",
+            "type": "secret"
+        },
+        {
+            "key": "otherLawyerToken",
+            "value": "",
+            "type": "secret"
+        },
+        {
+            "key": "caseId",
+            "value": "",
+            "type": "default"
+        }
+    ]
+}
