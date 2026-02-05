@@ -4,6 +4,7 @@ import { uploadToCloud, deleteFromCloud } from './cloudinary.uploader.services.j
 import { handleFileUpload, formatProfileResponse, getOrCreateProfile } from '../utils/profile.helper.utils.js';
 import { parseJsonField } from '../utils/query.helper.utils.js';
 import { NOT_FOUND, BAD_REQUEST } from '../error/error.js';
+import LawyerEducation from "../model/lawyerEducation.model.js";
 
 /**
  * ===============================================
@@ -19,14 +20,45 @@ import { NOT_FOUND, BAD_REQUEST } from '../error/error.js';
  * @param {LawyerProfile} profile - Lawyer profile document
  * @returns {Object} - Formatted response
  */
-const formatLawyerProfileResponse = (user, profile) => {
-    // Use base formatter with default field removals only
-    // Keep completion-related fields as they were in original implementation
-    return {
-        ...formatProfileResponse(user, profile),
-        completion: profile.updateCompletion()
-    };
+const formatLawyerProfileResponse = async (user, profile) => {
+  const education = await LawyerEducation.find({ lawyerId: profile._id })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // ✅ Real-time truth
+  const realEducationCount = education.length;
+  const realHasEducation = realEducationCount > 0;
+
+  // ✅ Inject into profile BEFORE computing completion (important)
+  profile.educationCount = realEducationCount;
+  profile.hasEducation = realHasEducation;
+
+  // ✅ Now completion will be correct
+  const completion = profile.updateCompletion();
+
+  // (Optional but recommended) persist fix so stale values never show again
+  if (
+    profile.isModified("educationCount") ||
+    profile.isModified("hasEducation")
+  ) {
+    await profile.save();
+  }
+
+  return {
+    ...formatProfileResponse(user, profile),
+
+    education,
+
+    // ✅ force response to match computed completion
+    stepsCompleted: completion.stepsCompleted,
+    profileCompletionStep: completion.currentStep,
+    profileCompletionPercentage: completion.percentage,
+    isProfileComplete: completion.isComplete,
+
+    completion
+  };
 };
+
 
 // ==================== GET SERVICES ====================
 
@@ -40,7 +72,7 @@ export async function getLawyerProfileService(userId) {
     if (!user) throw new NOT_FOUND('User not found');
 
     const profile = await getOrCreateProfile(LawyerProfile, userId);
-    return formatLawyerProfileResponse(user, profile);
+   return await formatLawyerProfileResponse(user, profile);
 }
 
 /**
@@ -78,12 +110,7 @@ export async function updateLawyerProfileService(userId, data, files = {}) {
     if (data.postalAddress !== undefined) profile.postalAddress = data.postalAddress;
 
     // ========== STEP 2: Professional Qualifications (Multiple) ==========
-    if (data.educationalQualifications !== undefined) {
-        const qualifications = parseJsonField(data.educationalQualifications, []);
-        if (Array.isArray(qualifications)) {
-            profile.educationalQualifications = qualifications;
-        }
-    }
+
     if (data.licenseNo !== undefined) profile.licenseNo = data.licenseNo;
     if (data.associationBar !== undefined) profile.associationBar = data.associationBar;
     if (data.barCity !== undefined) profile.barCity = data.barCity;
@@ -159,24 +186,6 @@ export async function updateLawyerProfileService(userId, data, files = {}) {
         if (result) profile.barLicenseDocument = result;
     }
 
-    if (files.degreeCertificate) {
-        // Handle multiple degree certificates for multiple qualifications
-        const certFiles = Array.isArray(files.degreeCertificate) ? files.degreeCertificate : [files.degreeCertificate];
-        
-        for (let i = 0; i < certFiles.length; i++) {
-            if (certFiles[i]) {
-                const result = await handleFileUpload({
-                    file: certFiles[i],
-                    existingDoc: profile.educationalQualifications?.[i]?.degreeCertificate,
-                    uploadFn: uploadToCloud,
-                    deleteFn: deleteFromCloud
-                });
-                if (result && profile.educationalQualifications?.[i]) {
-                    profile.educationalQualifications[i].degreeCertificate = result;
-                }
-            }
-        }
-    }
 
     // Save both documents
     await user.save();
@@ -215,57 +224,30 @@ export async function updateLawyerStep1Service(userId, data) {
  * Step 2: Professional Qualifications
  */
 export async function updateLawyerStep2Service(userId, data, files) {
-    const user = await User.findById(userId);
-    if (!user) throw new NOT_FOUND('User not found');
+  const user = await User.findById(userId);
+  if (!user) throw new NOT_FOUND("User not found");
 
-    const profile = await getOrCreateProfile(LawyerProfile, userId);
+  const profile = await getOrCreateProfile(LawyerProfile, userId);
 
-    // Update Step 2 Fields
-    if (data.educationalQualifications !== undefined) {
-        const qualifications = parseJsonField(data.educationalQualifications, []);
-        if (Array.isArray(qualifications)) {
-            profile.educationalQualifications = qualifications;
-        }
-    }
-    if (data.licenseNo !== undefined) profile.licenseNo = data.licenseNo;
-    if (data.associationBar !== undefined) profile.associationBar = data.associationBar;
-    if (data.barCity !== undefined) profile.barCity = data.barCity;
-    if (data.yearsOfExperience !== undefined) profile.yearsOfExperience = parseInt(data.yearsOfExperience, 10);
+  if (data.licenseNo !== undefined) profile.licenseNo = data.licenseNo;
+  if (data.associationBar !== undefined) profile.associationBar = data.associationBar;
+  if (data.barCity !== undefined) profile.barCity = data.barCity;
+  if (data.yearsOfExperience !== undefined) profile.yearsOfExperience = parseInt(data.yearsOfExperience, 10);
 
-    // Handle Step 2 Files
-    if (files?.degreeCertificate) {
-        // Handle multiple degree certificates for multiple qualifications
-        const certFiles = Array.isArray(files.degreeCertificate) ? files.degreeCertificate : [files.degreeCertificate];
-        
-        for (let i = 0; i < certFiles.length; i++) {
-            if (certFiles[i]) {
-                const result = await handleFileUpload({
-                    file: certFiles[i],
-                    existingDoc: profile.educationalQualifications?.[i]?.degreeCertificate,
-                    uploadFn: uploadToCloud,
-                    deleteFn: deleteFromCloud
-                });
-                if (result && profile.educationalQualifications?.[i]) {
-                    profile.educationalQualifications[i].degreeCertificate = result;
-                }
-            }
-        }
-    }
+  if (files?.barLicenseDocument?.[0]) {
+    const result = await handleFileUpload({
+      file: files.barLicenseDocument[0],
+      existingDoc: profile.barLicenseDocument,
+      uploadFn: uploadToCloud,
+      deleteFn: deleteFromCloud
+    });
+    if (result) profile.barLicenseDocument = result;
+  }
 
-    if (files?.barLicenseDocument?.[0]) {
-        const result = await handleFileUpload({
-            file: files.barLicenseDocument[0],
-            existingDoc: profile.barLicenseDocument,
-            uploadFn: uploadToCloud,
-            deleteFn: deleteFromCloud
-        });
-        if (result) profile.barLicenseDocument = result;
-    }
-
-    await profile.save();
-    // User model not modified in this step, but good practice to have recent user object for response
-    return formatLawyerProfileResponse(user, profile);
+  await profile.save();
+  return formatLawyerProfileResponse(user, profile);
 }
+
 
 /**
  * Step 3: Practice Areas
