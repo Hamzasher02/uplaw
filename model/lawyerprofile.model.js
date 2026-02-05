@@ -63,27 +63,8 @@ const lawyerProfileSchema = new mongoose.Schema({
     },
 
     // ========== STEP 2: Professional Qualifications (Multiple) ==========
-    // Educational Qualifications (Array)
-    educationalQualifications: [{
-        _id: mongoose.Schema.Types.ObjectId,
-        degree: {
-            type: String,
-            trim: true
-        },
-        university: {
-            type: String,
-            trim: true
-        },
-        passingYear: {
-            type: Number,
-            min: 1950,
-            max: new Date().getFullYear()
-        },
-        degreeCertificate: {
-            publicId: String,
-            secureUrl: String
-        }
-    }],
+hasEducation: { type: Boolean, default: false },
+educationCount: { type: Number, default: 0, min: 0 },
 
     // Bar License
     licenseNo: {
@@ -197,15 +178,30 @@ lawyerProfileSchema.index({ servicesOffered: 1 });
 
 // Method to validate and update step completion
 lawyerProfileSchema.methods.validateStep = function (stepNumber) {
-    const validations = {
-        1: () => !!(this.dateOfBirth && this.city),
-        2: () => !!(this.educationalQualifications?.length > 0 && this.licenseNo),
-        3: () => !!(this.areasOfPractice?.length > 0 && this.courtJurisdiction?.length > 0),
-        4: () => !!(this.practiceLocations?.length > 0 && this.professionalBio),
-        5: () => !!(this.cnicDocuments?.length >= 2)
-    };
+  const validations = {
+    1: () => !!(this.dateOfBirth && this.city),
 
-    return validations[stepNumber] ? validations[stepNumber]() : false;
+    // ✅ Step 2 = Education AND Bar Info (both required)
+    2: () => {
+      const hasEdu = Number(this.educationCount || 0) > 0;
+
+      const hasBar =
+        !!this.licenseNo &&
+        !!this.associationBar &&
+        !!this.barCity &&
+        (this.yearsOfExperience !== undefined &&
+          this.yearsOfExperience !== null &&
+          !Number.isNaN(Number(this.yearsOfExperience)));
+
+      return hasEdu && hasBar;
+    },
+
+    3: () => !!(this.areasOfPractice?.length > 0 && this.courtJurisdiction?.length > 0),
+    4: () => !!(this.practiceLocations?.length > 0 && this.professionalBio),
+    5: () => !!(this.cnicDocuments?.length >= 2)
+  };
+
+  return validations[stepNumber] ? validations[stepNumber]() : false;
 };
 
 // Method to update profile completion
